@@ -13,19 +13,29 @@ Your goal is to:
 
 Replace this paragraph with your own summary of what your version does.
 
+
+
 ---
 
 ## How The System Works
 
 Explain your design in plain language.
 
+**The two most common filtering methods for suggestions when it comes to selecting what type of media should be shown to a user, are content-based filtering and collaborative filtering. Content-based filtering emphasizes certain details and characteristics of its media while collaborative filtering is dependent on other users that have similar scoring suggestions. Real world applications, such as YouTube or Spotify, use a hybrid of both filtering methods. This includes a 'taste graph', content-based audio-embedding models, session-based models, and contextual signals (based on a user's behavior).** 
+
+**In this project, our version will prioritize key features provided for us, given a song and its features with its own score, on a scale from 0.0 to 1.0. To score a song, we use a formula that subtracts the absolute value of the difference between a song's feature value and the user's preference for that feature, from 1 (score = 1 - |song value - user preference|). The user's preference for each feature comes from averaging that feature across every song the user has liked, giving us a centroid, which is one point representing the user's overall taste. Each new candidate song is then compared against this centroid, and the closer a song's features are to the centroid, the higher its score. Ultimately, we rank recommended songs from smallest distance (best match) to largest distance (worst match) from the centroid.**
+
 Some prompts to answer:
 
 - What features does each `Song` use in your system
   - For example: genre, mood, energy, tempo
+    -  **Features that each `Song` uses in our system are energy, valence, danceability, acousticness, and tempo_bpm.**
 - What information does your `UserProfile` store
+  - **Our `UserProfile` stores information descripting data variables on a user's favortie genre, mood, their target energy score, and if they like acoustic-featured music.**
 - How does your `Recommender` compute a score for each song
+  -**Our recommended will compute a score for each song by subtracting the absolute value of the difference between the song's feature value and user preference score, from 1..**
 - How do you choose which songs to recommend
+  -**Songs will be recommended based on a ranking system. The user will have an average score that represents their overall taste on a feature, acting as a centroid. Songs being recommended will be scored from highest to lowest, based on how close their score is to the centroid value.**
 
 You can include a simple diagram or bullet list if helpful.
 

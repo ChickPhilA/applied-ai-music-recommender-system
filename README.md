@@ -39,6 +39,24 @@ Some prompts to answer:
 
 You can include a simple diagram or bullet list if helpful.
 
+### Algorithm Recipe
+
+1. **Represent each song as feature values** — genre, mood (categorical), plus energy, valence, danceability, acousticness, and tempo (numeric, scaled 0.0–1.0).
+2. **Build the user's centroid** — average the numeric features across the songs a user has liked (or, in our current starter profiles, set these target values directly). This centroid represents the user's overall taste, e.g. `[energy=0.6, valence=0.6, danceability=0.5, acousticness=0.5]`.
+3. **Score each candidate song against the centroid:**
+   - **Genre match** → +2.0 points if the song's genre matches the user's favorite genre, else +0.
+   - **Mood match** → +1.0 point if the song's mood matches the user's favorite mood, else +0.
+   - **Numeric closeness** → for each numeric feature, compute `closeness = 1 - |song value - user preference|`, then convert to points by multiplying by that feature's max point value (e.g. `closeness_energy × 3.0`).
+4. **Add up all the points** into one `total_points` score per song.
+5. **Rank songs by `total_points`**, highest to lowest, and return the top `k` as recommendations.
+
+### Potential Biases to Watch For
+
+- **Popularity/genre skew:** genre match is weighted heavily (+2.0), so songs in the user's favorite genre could dominate recommendations even when a differently-labeled song is a closer overall match — narrowing exposure over time.
+- **Catalog bias:** our dataset is small and hand-picked, so certain genres/moods are represented more than others, which can make the recommender look more "confident" about some tastes than others simply due to data availability, not real fit.
+- **Cold-start bias:** users with no liked-song history (or only a couple of liked songs) get a centroid built from very little data, which can produce narrow or skewed recommendations until more preference data is collected.
+- **Feature bias:** the numeric features we score on (energy, valence, danceability, acousticness) don't capture everything about a song (e.g. lyrics, cultural context, instrumentation) — so two songs that "feel" different to a human listener could still score as very close matches.
+
 ---
 
 ## Getting Started

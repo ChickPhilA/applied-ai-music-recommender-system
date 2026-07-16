@@ -96,15 +96,52 @@ You can add more tests in `tests/test_recommender.py`.
 
 ## Sample Recommendation Output
 
-Paste a sample of your recommender's output here as a text block so a reader can see what it produces:
+Output from `python -m src.main` for the default "pop/happy" profile (`genre=pop, mood=happy, energy=0.8, valence=0.8, danceability=0.8, acousticness=0.2`):
 
 ```
-# e.g.:
-# User profile: genre=indie, mood=chill, energy=low
-# Recommendations:
-#   1. ...
-#   2. ...
-#   3. ...
+Loaded songs: 20
+
+Top recommendations:
+==================================================
+1. Sunrise City — Score: 11.80
+--------------------------------------------------
+  - Genre matches (pop) +2.0
+  - Mood matches (happy) +1.0
+  - Energy closeness 0.98 (+2.94)
+  - Valence closeness 0.96 (+1.92)
+  - Danceability closeness 0.99 (+1.98)
+  - Acousticness closeness 0.98 (+1.96)
+==================================================
+2. Gym Hero — Score: 10.09
+--------------------------------------------------
+  - Genre matches (pop) +2.0
+  - Energy closeness 0.87 (+2.61)
+  - Valence closeness 0.97 (+1.94)
+  - Danceability closeness 0.92 (+1.84)
+  - Acousticness closeness 0.85 (+1.70)
+==================================================
+3. Rooftop Lights — Score: 9.52
+--------------------------------------------------
+  - Mood matches (happy) +1.0
+  - Energy closeness 0.96 (+2.88)
+  - Valence closeness 0.99 (+1.98)
+  - Danceability closeness 0.98 (+1.96)
+  - Acousticness closeness 0.85 (+1.70)
+==================================================
+4. Fire In The Sky — Score: 8.78
+--------------------------------------------------
+  - Energy closeness 0.98 (+2.94)
+  - Valence closeness 0.92 (+1.84)
+  - Danceability closeness 1.00 (+2.00)
+  - Acousticness closeness 1.00 (+2.00)
+==================================================
+5. Night Drive Loop — Score: 8.05
+--------------------------------------------------
+  - Energy closeness 0.95 (+2.85)
+  - Valence closeness 0.69 (+1.38)
+  - Danceability closeness 0.93 (+1.86)
+  - Acousticness closeness 0.98 (+1.96)
+==================================================
 ```
 
 **Screenshot or video** *(optional)*: <!-- Insert a screenshot or demo video link here -->

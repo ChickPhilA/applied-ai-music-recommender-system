@@ -70,6 +70,10 @@ Prompts:
 - Cases where the system overfits to one preference  
 - Ways the scoring might unintentionally favor some users  
 
+**A weakness that was discovered during our experiments was heavily weighing bias towards energy, while shifting away from genre as a factor in our recommendation algorithm. Energy's weight in deciding which songs to recommend from our .csv file was already a multipler of 3.0, which already gives the feature a major bias over other songs' features. However, when we doubled the weight multiplier by 2, our energy's weight totaled to 6.0, which halving genre's weight (initially 2.0) to 1.0. This caused user profiles' who have low energy preferences but in favor of genre(s) in general, to be provided unrealisitc recommendations from our .csv file.**
+
+**In the experiment, a profile, initially having Sunrise City as its top recommendation, was flipped with Gym Hero in its rankings, showing that the ranking is sensitive to small weight choices, not just to what the user is actually asking for.**
+
 ---
 
 ## 7. Evaluation  
@@ -83,7 +87,35 @@ Prompts:
 - What surprised you  
 - Any simple tests or comparisons you ran  
 
+**We tested 8 profiles in general. These were the qualities of the profiles and their results:**
+
+**Profile 1: Conflicted (pop/sad, high energy preference)** --> Sunrise City (a happy song) win; mood mismatch outweighted by energy/valence match. Bias towards energy scoring here
+
+**Profile 2: likes_acoustic contradiction** --> Midnight Coding wins, despite user's acousticness value of 0.0, but prefers to like acoustic music. Midnight Coding has a low closeness acoustic store, but still recommended after likes_acoustic scoring bug was fixed.
+
+**Profile 3: Empty file: no data at all** --> All songs tie at 0.00. Returns CSV file order.
+
+**Profile 4: Case Type ("Pop", "Happy")** --> Sunrise City ties for #1 despite exact match, loses genre/mood points to capitalization in profile data.
+
+**Profile 5: Out-of-range values (energy=1.8)** --> Iron Collapse wins with score of 0.75. No negative scores after clamp fix.
+
+**Profile 6: Single-feature (energy=0.5 ONLY)** --> Dusty Backroads wins- ranks purely for energy closeness.
+
+**Profile 7: Unknown key (tempo_bpm)** --> Storm Runner wins on genre alone; tempo feature was silently ignored.
+
+**Profile 8: Perfect opposite (all zeroes, fake genre/mood)** --> Faded Photographs win at 5.35; feature closeness alone gave a fairly high floor.
+
 No need for numeric metrics unless you created some.
+
+**Profile comparisons:**
+
+Profiles 1 vs 2: Profile 1 (pop/sad, high energy) lets energy and valence overpower a mood mismatch, while Profile 2 (lofi/chill, contradicts acousticness) wins mainly on genre+mood match, showing energy dominates when it's strong, but genre+mood dominate when energy isn't in play.
+
+Profiles 3 vs 4: Profile 3 (empty) has nothing to score against so it just returns file order, while Profile 4 (case typo) actually scores on energy alone because the capitalized genre/mood strings silently fail to match, proving exact-string matching is case-sensitive and unforgiving.
+
+Profiles 5 vs 6: Profile 5 (out-of-range energy) shows the formula can produce invalid negative points without a clamp, while Profile 6 (a single valid feature) shows the same formula behaves perfectly reasonably when given in-range input, meaning the bug was about bad input, not bad math.
+
+Profiles 7 vs 8: Profile 7 (unknown tempo_bpm key) shows unsupported preferences are silently ignored with zero effect, while Profile 8 (all-zero, fake genre/mood) shows that even a "worst case" profile still scores respectably high from feature closeness alone, meaning the score floor is higher than it feels like it should be.
 
 ---
 

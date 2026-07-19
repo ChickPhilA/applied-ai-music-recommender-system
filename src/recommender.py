@@ -76,6 +76,9 @@ FEATURE_MAX_POINTS = {
     "acousticness": 2.0,
 }
 
+ACOUSTIC_BONUS_THRESHOLD = 0.5
+ACOUSTIC_BONUS_POINTS = 1.0
+
 
 def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     """Scores a single song against user preferences using genre/mood matches and feature closeness."""
@@ -93,10 +96,15 @@ def score_song(user_prefs: Dict, song: Dict) -> Tuple[float, List[str]]:
     for feature, max_points in FEATURE_MAX_POINTS.items():
         if feature not in user_prefs:
             continue
-        closeness = 1 - abs(song[feature] - user_prefs[feature])
+        # Clamp so preference values outside [0, 1] can't push a song's score negative.
+        closeness = max(0.0, 1 - abs(song[feature] - user_prefs[feature]))
         points = closeness * max_points
         score += points
         reasons.append(f"{feature.capitalize()} closeness {closeness:.2f} (+{points:.2f})")
+
+    if user_prefs.get("likes_acoustic") and song["acousticness"] >= ACOUSTIC_BONUS_THRESHOLD:
+        score += ACOUSTIC_BONUS_POINTS
+        reasons.append(f"Likes acoustic music and song is acoustic (+{ACOUSTIC_BONUS_POINTS:.2f})")
 
     return round(score, 2), reasons
 

@@ -3,7 +3,7 @@
 ## 1. Model Name  
 
 Give your model a short, descriptive name.  
-Example: **VibeFinder 1.0**  
+Model name: **Harmo-Vibe**  
 
 ---
 
@@ -16,6 +16,8 @@ Prompts:
 - What kind of recommendations does it generate  
 - What assumptions does it make about the user  
 - Is this for real users or classroom exploration  
+
+**Our recomemnder is made for hardcore or ameteaur music enjoyers alike, to find the best song recommendations based on the user's personal preferences.**
 
 ---
 
@@ -30,7 +32,22 @@ Prompts:
 - How does the model turn those into a score  
 - What changes did you make from the starter logic  
 
-Avoid code here. Pretend you are explaining the idea to a friend who does not program.
+**We first measure with the features of each song. These features include genre and mood (categoies), energy, valence, danceability, and acousticness (0 to 1 scale in terms of closeness), and also the song's tempo's BPM (but that's actually not really used in the scoring).**
+
+**These features are measured against the user's preferences. We see if the user's genre and mood matches with the song (bonus points in the scoring process), target values for energy, valence, danceability, and acousticness are close to the song's initial feature values, and a yes/no flag for liking acoustic music.**
+
+**The user's preferences to the song's features are measured to a score by the following grading standards:**
+- **Genre match = flat bonus points**
+- **Mood match = flat bonus points (smaller than genre, however)**
+- **Each numeric feature = points based on how close the song's value is to the user's target, rather than being the same, precise score**
+- **Acoustic-lover flag = small bonus is the song is acoustic enough**
+
+**Comparing to the initial starter logic, a few bugs were found and fixed:**
+- **The acoustic-lover flag was being collected but actually never used**
+- **Target values outside the normal 0-1 range could make a song's sore go negative**
+
+
+
 
 ---
 
@@ -45,6 +62,12 @@ Prompts:
 - Did you add or remove data  
 - Are there parts of musical taste missing in the dataset  
 
+**There are 20 songs in the catalog. 17 different genres are represented, but most appear only once. 16 different moods are represented, with chill and happy/intense being the only repeats.**
+
+**No data was added or removed as we used the start CSV as it was.**
+
+**In the dataset, lyrics, instrumentation/vocals, cultural context, and tempo preference weren't scored even though the data has it. Energy values also cluster unevenly (which there is a noticable gap between 0.5 and 0.7), so "moderate energy" tastes are underserved.**
+
 ---
 
 ## 5. Strengths  
@@ -56,6 +79,12 @@ Prompts:
 - User types for which it gives reasonable results  
 - Any patterns you think your scoring captures correctly  
 - Cases where the recommendations matched your intuition  
+
+**Our recommender handles profiles with consistent, clear, in-range preferences well. For example, the default "happy pop" profile", or the single-feature energy = 0.5 profile, since both got clean, sensible top picks with no bugs nor bias distortion, and fair scaling.**
+
+**Genre and mood matching works exactly as intended when the same string is being used between the song and the user's preferences. Numeric closeness scoring correctly rewards songs that are near the target and penalizes ones that are far off.**
+
+**Sunrise City winning for a happy/pop/high-energy profile made sense, since the song's real vlaues genuinely fit that description. Dusty Backroads winning for an energy=0.5 only profile also made sense, since it has energy exactly 0.5.**
 
 ---
 
@@ -130,6 +159,12 @@ Prompts:
 - Improving diversity among the top results  
 - Handling more complex user tastes  
 
+**If I were to improve the model in the future, the first thing that I would add are more features to be measured in order to add more variety and scaling in weighing out the scoring further. For instance, if I were to add other features such as vocals, lyrics, instrumentation, loudness, etc., our scaling would add more precision to the recommendation score. In fact, lyrics and instrumentation were features missing mentioned earlier, in Section 4 of this Model Card.**
+
+**To better explain recommendations, we could show users how confident a match actually is, rather than it just being a point breakdown, so they can know if it's a great fit or just the least-bad option.**
+
+**Adding some intentional variety would mix up the variety instead of always returning the same strict top-k, and handling mixed/contradictiory preferences without letting one strong feature silently override the rest.**
+
 ---
 
 ## 9. Personal Reflection  
@@ -141,3 +176,8 @@ Prompts:
 - What you learned about recommender systems  
 - Something unexpected or interesting you discovered  
 - How this changed the way you think about music recommendation apps  
+
+**My biggest learning moment about recommender systems is that we can use a mathematical algorithm using an average target value (being the centroid) by just proximity, rather than being a precise-exact value. This helped me understand better how music recommenders on Spotify, YouTube, or other streaming platforms help gather the best recommendations for user's based on their personal preferences or activities.**
+
+**In the future, I could add other features as mentioned prior in the model card to better tailor the user's personal preferences, such as cultural/other languages, to see how other types of music could be measured with our current algorithm. There are over 150 million songs in history; no matter how historically significant or culturally recent it may be, all music can fit one music recommender, for many people.**
+

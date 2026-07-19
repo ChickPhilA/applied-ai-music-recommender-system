@@ -148,6 +148,296 @@ Top recommendations:
 
 ---
 
+## Adversarial / Edge Case Testing
+
+To stress-test the scoring logic, we ran `recommend_songs` against several deliberately tricky user profiles — contradictory preferences, missing fields, out-of-range values, and typos. This surfaced two real bugs, which we then fixed in `score_song`:
+
+1. **`likes_acoustic` was dead code.** The field was parsed into every profile but never read anywhere in the scoring formula. Fixed by adding a +1.0 bonus when `likes_acoustic` is `True` and the song's `acousticness >= 0.5`.
+2. **Out-of-range preference values produced negative scores.** Feature closeness (`1 - |song value - user preference|`) assumed both values were in `[0, 1]`; a preference like `energy=1.8` could push closeness — and therefore points — negative. Fixed by clamping closeness to `max(0.0, ...)`.
+
+The outputs below are from `recommend_songs`, using the fixed scoring logic.
+
+### 1. Conflicted (high energy but "sad" mood)
+prefs: `{'genre': 'pop', 'mood': 'sad', 'energy': 0.9, 'valence': 0.9, 'danceability': 0.8, 'acousticness': 0.1, 'likes_acoustic': False}`
+
+```
+Top recommendations:
+==================================================
+1. Sunrise City — Score: 10.46
+--------------------------------------------------
+  - Genre matches (pop) +2.0
+  - Energy closeness 0.92 (+2.76)
+  - Valence closeness 0.94 (+1.88)
+  - Danceability closeness 0.99 (+1.98)
+  - Acousticness closeness 0.92 (+1.84)
+==================================================
+2. Gym Hero — Score: 10.39
+--------------------------------------------------
+  - Genre matches (pop) +2.0
+  - Energy closeness 0.97 (+2.91)
+  - Valence closeness 0.87 (+1.74)
+  - Danceability closeness 0.92 (+1.84)
+  - Acousticness closeness 0.95 (+1.90)
+==================================================
+3. Neon Pulse Rave — Score: 8.35
+--------------------------------------------------
+  - Energy closeness 0.93 (+2.79)
+  - Valence closeness 0.98 (+1.96)
+  - Danceability closeness 0.88 (+1.76)
+  - Acousticness closeness 0.92 (+1.84)
+==================================================
+4. Fire In The Sky — Score: 8.08
+--------------------------------------------------
+  - Energy closeness 0.88 (+2.64)
+  - Valence closeness 0.82 (+1.64)
+  - Danceability closeness 1.00 (+2.00)
+  - Acousticness closeness 0.90 (+1.80)
+==================================================
+5. Rooftop Lights — Score: 7.86
+--------------------------------------------------
+  - Energy closeness 0.86 (+2.58)
+  - Valence closeness 0.91 (+1.82)
+  - Danceability closeness 0.98 (+1.96)
+  - Acousticness closeness 0.75 (+1.50)
+==================================================
+```
+**Finding:** the #1 result, *Sunrise City*, is mood=`happy`, not `sad`. Strong energy/valence/danceability closeness outweighs a single 1-point mood mismatch — a "sad" listener gets happy pop songs.
+
+### 2. `likes_acoustic` contradiction (says "I like acoustic" but sets acousticness target to 0.0)
+prefs: `{'genre': 'lofi', 'mood': 'chill', 'acousticness': 0.0, 'likes_acoustic': True}`
+
+```
+Top recommendations:
+==================================================
+1. Midnight Coding — Score: 4.58
+--------------------------------------------------
+  - Genre matches (lofi) +2.0
+  - Mood matches (chill) +1.0
+  - Acousticness closeness 0.29 (+0.58)
+  - Likes acoustic music and song is acoustic (+1.00)
+==================================================
+2. Library Rain — Score: 4.28
+--------------------------------------------------
+  - Genre matches (lofi) +2.0
+  - Mood matches (chill) +1.0
+  - Acousticness closeness 0.14 (+0.28)
+  - Likes acoustic music and song is acoustic (+1.00)
+==================================================
+3. Focus Flow — Score: 3.44
+--------------------------------------------------
+  - Genre matches (lofi) +2.0
+  - Acousticness closeness 0.22 (+0.44)
+  - Likes acoustic music and song is acoustic (+1.00)
+==================================================
+4. Spacewalk Thoughts — Score: 2.16
+--------------------------------------------------
+  - Mood matches (chill) +1.0
+  - Acousticness closeness 0.08 (+0.16)
+  - Likes acoustic music and song is acoustic (+1.00)
+==================================================
+5. Neon Pulse Rave — Score: 1.96
+--------------------------------------------------
+  - Acousticness closeness 0.98 (+1.96)
+==================================================
+```
+**Finding:** after the fix, `likes_acoustic` now visibly contributes a "+1.00" bonus line for acoustic songs — confirming the flag is finally wired into scoring.
+
+### 3. Empty profile
+prefs: `{}`
+
+```
+Top recommendations:
+==================================================
+1. Sunrise City — Score: 0.00
+--------------------------------------------------
+  - (no scoring criteria applied to this song)
+==================================================
+2. Midnight Coding — Score: 0.00
+--------------------------------------------------
+  - (no scoring criteria applied to this song)
+==================================================
+3. Storm Runner — Score: 0.00
+--------------------------------------------------
+  - (no scoring criteria applied to this song)
+==================================================
+4. Library Rain — Score: 0.00
+--------------------------------------------------
+  - (no scoring criteria applied to this song)
+==================================================
+5. Gym Hero — Score: 0.00
+--------------------------------------------------
+  - (no scoring criteria applied to this song)
+==================================================
+```
+**Finding:** every song ties at 0.0, and the top 5 returned exactly match the CSV's row order (a stable sort). An empty profile isn't "no preference" — it silently degrades into "return the first 5 rows of the file."
+
+### 4. Case-sensitivity typo
+prefs: `{'genre': 'Pop', 'mood': 'Happy', 'energy': 0.8}`
+
+```
+Top recommendations:
+==================================================
+1. Sunrise City — Score: 2.94
+--------------------------------------------------
+  - Energy closeness 0.98 (+2.94)
+==================================================
+2. Fire In The Sky — Score: 2.94
+--------------------------------------------------
+  - Energy closeness 0.98 (+2.94)
+==================================================
+3. Rooftop Lights — Score: 2.88
+--------------------------------------------------
+  - Energy closeness 0.96 (+2.88)
+==================================================
+4. Night Drive Loop — Score: 2.85
+--------------------------------------------------
+  - Energy closeness 0.95 (+2.85)
+==================================================
+5. Concrete Throne — Score: 2.70
+--------------------------------------------------
+  - Energy closeness 0.90 (+2.70)
+==================================================
+```
+**Finding:** *Sunrise City* is an exact `pop`/`happy` match, but `"Pop" != "pop"` in Python, so it ties for 1st with an unrelated funk song instead of winning outright on genre + mood.
+
+### 5. Out-of-range values
+prefs: `{'energy': 1.8, 'valence': -0.5}`
+
+```
+Top recommendations:
+==================================================
+1. Iron Collapse — Score: 0.75
+--------------------------------------------------
+  - Energy closeness 0.15 (+0.45)
+  - Valence closeness 0.15 (+0.30)
+==================================================
+2. Neon Pulse Rave — Score: 0.51
+--------------------------------------------------
+  - Energy closeness 0.17 (+0.51)
+  - Valence closeness 0.00 (+0.00)
+==================================================
+3. Faded Photographs — Score: 0.40
+--------------------------------------------------
+  - Energy closeness 0.00 (+0.00)
+  - Valence closeness 0.20 (+0.40)
+==================================================
+4. Gym Hero — Score: 0.39
+--------------------------------------------------
+  - Energy closeness 0.13 (+0.39)
+  - Valence closeness 0.00 (+0.00)
+==================================================
+5. Storm Runner — Score: 0.37
+--------------------------------------------------
+  - Energy closeness 0.11 (+0.33)
+  - Valence closeness 0.02 (+0.04)
+==================================================
+```
+**Finding:** before the fix, several of these scores were negative (down to -0.25). After clamping closeness to `max(0.0, ...)`, the worst case is now 0.00 instead of going negative.
+
+### 6. Single-feature profile
+prefs: `{'energy': 0.5}`
+
+```
+Top recommendations:
+==================================================
+1. Dusty Backroads — Score: 3.00
+--------------------------------------------------
+  - Energy closeness 1.00 (+3.00)
+==================================================
+2. surf. — Score: 2.85
+--------------------------------------------------
+  - Energy closeness 0.95 (+2.85)
+==================================================
+3. Velvet Hours — Score: 2.85
+--------------------------------------------------
+  - Energy closeness 0.95 (+2.85)
+==================================================
+4. Midnight Coding — Score: 2.76
+--------------------------------------------------
+  - Energy closeness 0.92 (+2.76)
+==================================================
+5. Focus Flow — Score: 2.70
+--------------------------------------------------
+  - Energy closeness 0.90 (+2.70)
+==================================================
+```
+**Finding:** behaves reasonably — ranks purely by energy closeness. Unset features are fully ignored (not penalized), which is expected but worth documenting explicitly.
+
+### 7. Unknown/extra key (`tempo_bpm`)
+prefs: `{'genre': 'rock', 'tempo_bpm': 140}`
+
+```
+Top recommendations:
+==================================================
+1. Storm Runner — Score: 2.00
+--------------------------------------------------
+  - Genre matches (rock) +2.0
+==================================================
+2. Sunrise City — Score: 0.00
+--------------------------------------------------
+  - (no scoring criteria applied to this song)
+==================================================
+3. Midnight Coding — Score: 0.00
+--------------------------------------------------
+  - (no scoring criteria applied to this song)
+==================================================
+4. Library Rain — Score: 0.00
+--------------------------------------------------
+  - (no scoring criteria applied to this song)
+==================================================
+5. Gym Hero — Score: 0.00
+--------------------------------------------------
+  - (no scoring criteria applied to this song)
+==================================================
+```
+**Finding:** `tempo_bpm` is silently ignored — `Song` has that field, but `FEATURE_MAX_POINTS` doesn't, so a user's tempo preference has zero effect on the outcome with no warning.
+
+### 8. Perfect opposite (all-zero features, nonexistent genre/mood)
+prefs: `{'genre': 'none-existing-genre', 'mood': 'none-existing-mood', 'energy': 0.0, 'valence': 0.0, 'danceability': 0.0, 'acousticness': 0.0}`
+
+```
+Top recommendations:
+==================================================
+1. Faded Photographs — Score: 5.35
+--------------------------------------------------
+  - Energy closeness 0.75 (+2.25)
+  - Valence closeness 0.70 (+1.40)
+  - Danceability closeness 0.75 (+1.50)
+  - Acousticness closeness 0.10 (+0.20)
+==================================================
+2. Quiet Reverie — Score: 5.06
+--------------------------------------------------
+  - Energy closeness 0.80 (+2.40)
+  - Valence closeness 0.45 (+0.90)
+  - Danceability closeness 0.85 (+1.70)
+  - Acousticness closeness 0.03 (+0.06)
+==================================================
+3. Velvet Hours — Score: 4.95
+--------------------------------------------------
+  - Energy closeness 0.55 (+1.65)
+  - Valence closeness 0.50 (+1.00)
+  - Danceability closeness 0.45 (+0.90)
+  - Acousticness closeness 0.70 (+1.40)
+==================================================
+4. Iron Collapse — Score: 4.49
+--------------------------------------------------
+  - Energy closeness 0.05 (+0.15)
+  - Valence closeness 0.65 (+1.30)
+  - Danceability closeness 0.55 (+1.10)
+  - Acousticness closeness 0.97 (+1.94)
+==================================================
+5. surf. — Score: 4.35
+--------------------------------------------------
+  - Energy closeness 0.55 (+1.65)
+  - Valence closeness 0.38 (+0.76)
+  - Danceability closeness 0.52 (+1.04)
+  - Acousticness closeness 0.45 (+0.90)
+==================================================
+```
+**Finding:** even with genre/mood matching nothing, feature closeness alone lands a song at 5.35 out of a possible 12 points — the score floor from numeric closeness is higher than it might intuitively seem.
+
+---
+
 ## Experiments You Tried
 
 Use this section to document the experiments you ran. For example:

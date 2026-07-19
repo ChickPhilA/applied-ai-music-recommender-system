@@ -446,6 +446,10 @@ Use this section to document the experiments you ran. For example:
 - What happened when you added tempo or valence to the score
 - How did your system behave for different types of users
 
+**We temporarily removed the mood check entirely and reran our 8 test profiles; only one profile's ranking actually changed, showing mood is a fairly weak signal in this dataset since most songs never had a matching mood to begin with.**
+
+**We also doubled energy's weight (3.0 to 6.0) and halved genre's (2.0 to 1.0), which flipped the #1 result from Sunrise City to Gym Hero for one profile, proving the ranking is sensitive to small weight choices and not just to what the user actually asked for.**
+
 ---
 
 ## Limitations and Risks

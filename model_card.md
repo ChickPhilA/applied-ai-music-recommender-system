@@ -146,6 +146,8 @@ Profiles 5 vs 6: Profile 5 (out-of-range energy) shows the formula can produce i
 
 Profiles 7 vs 8: Profile 7 (unknown tempo_bpm key) shows unsupported preferences are silently ignored with zero effect, while Profile 8 (all-zero, fake genre/mood) shows that even a "worst case" profile still scores respectably high from feature closeness alone, meaning the score floor is higher than it feels like it should be.
 
+**Since these 8 profiles were originally checked by hand, we later built an agentic loop (`src/agent.py`) that automates this same evaluation on every run.** It normalizes inputs, detects the same problem patterns we found manually (empty profiles, contradictory flags, unsupported keys), and self critiques its own top pick with a confidence label. Profile 1's mood mismatch, which used to require us noticing it in printed output, now gets flagged automatically as low confidence. All 8 profiles are also locked in as automated tests in `tests/test_agent.py`, so this evaluation is no longer a one-time manual pass.
+
 ---
 
 ## 8. Future Work  

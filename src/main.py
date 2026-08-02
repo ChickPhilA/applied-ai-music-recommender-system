@@ -9,14 +9,19 @@ You will implement the functions in recommender.py:
 - recommend_songs
 """
 
-from .recommender import load_songs, recommend_songs
+from .agent import plan_and_recommend
+from .recommender import load_songs
 
 
-def print_recommendations(title: str, recommendations) -> None:
+def print_recommendations(title: str, agent_result) -> None:
     print(f"\n{title}")
+    if agent_result.log:
+        print("Agent log:")
+        for entry in agent_result.log:
+            print(f"  [{entry['step']}] {entry['detail']}")
     print("=" * 50)
-    for rank, (song, score, explanation) in enumerate(recommendations, start=1):
-        print(f"{rank}. {song['title']} — Score: {score:.2f}")
+    for rank, (song, score, explanation, confidence) in enumerate(agent_result.recommendations, start=1):
+        print(f"{rank}. {song['title']} — Score: {score:.2f} — Confidence: {confidence}")
         print("-" * 50)
         for reason in explanation.split("; "):
             print(f"  - {reason}")
@@ -111,14 +116,14 @@ def main() -> None:
         "likes_acoustic": False,
     }
 
-    recommendations = recommend_songs(user_prefs, songs, k=5)
-    print_recommendations("Top recommendations:", recommendations)
+    result = plan_and_recommend(user_prefs, songs, k=5)
+    print_recommendations("Top recommendations:", result)
 
     print("\n\nAdversarial / Edge Case Profiles")
     print("#" * 50)
     for name, prefs in ADVERSARIAL_PROFILES.items():
-        recs = recommend_songs(prefs, songs, k=5)
-        print_recommendations(f"{name}\nprefs: {prefs}", recs)
+        result = plan_and_recommend(prefs, songs, k=5)
+        print_recommendations(f"{name}\nprefs: {prefs}", result)
 
 
 if __name__ == "__main__":

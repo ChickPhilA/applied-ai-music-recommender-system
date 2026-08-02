@@ -50,6 +50,16 @@ You can include a simple diagram or bullet list if helpful.
 4. **Add up all the points** into one `total_points` score per song.
 5. **Rank songs by `total_points`**, highest to lowest, and return the top `k` as recommendations.
 
+### Agentic Loop & Confidence Scoring
+
+On top of the scoring engine above, `src/agent.py` wraps every recommendation request in a small agentic loop that plans, acts, and checks its own work, implemented as plain deterministic Python (no live LLM calls needed for this):
+
+1. **Plan** — normalize the incoming preferences (lowercase `genre`/`mood` so casing typos don't silently fail to match, clamp any numeric target back into `[0, 1]`), then detect known problem patterns: an empty profile, a contradictory `likes_acoustic` flag, or unsupported keys like `tempo_bpm`. Every change or detection gets logged.
+2. **Act** — call the existing `recommend_songs()` scoring logic unchanged.
+3. **Check its own work** — for each returned song, compute a confidence label (`low`, `medium`, or `high`) from how much of the profile was actually specified and how close the score is to the next-ranked song. If the #1 pick comes back low confidence, the agent logs a self-critique warning flagging it.
+
+This is what actually catches the mood mismatch bug we found by hand below (Profile 1): the agent flags its own top pick as low confidence instead of presenting it with false certainty. See `tests/test_agent.py` for the automated tests covering this behavior.
+
 ### Potential Biases to Watch For
 
 - **Popularity/genre skew:** genre match is weighted heavily (+2.0), so songs in the user's favorite genre could dominate recommendations even when a differently-labeled song is a closer overall match — narrowing exposure over time.
@@ -84,13 +94,15 @@ python -m src.main
 
 ### Running Tests
 
-Run the starter tests with:
+Run the tests with:
 
 ```bash
-pytest
+python -m pytest
 ```
 
-You can add more tests in `tests/test_recommender.py`.
+(Note: bare `pytest` will fail with `ModuleNotFoundError: No module named 'src'` since there's no `conftest.py` — always run it as `python -m pytest` so the project root is on the path.)
+
+Tests live in `tests/test_recommender.py` (core scoring logic) and `tests/test_agent.py` (the agentic loop's plan/detect/self-critique behavior, covering the 8 adversarial profiles below).
 
 ---
 
@@ -150,7 +162,7 @@ Top recommendations:
 
 ## Adversarial / Edge Case Testing
 
-To stress-test the scoring logic, we ran `recommend_songs` against several deliberately tricky user profiles — contradictory preferences, missing fields, out-of-range values, and typos. This surfaced two real bugs, which we then fixed in `score_song`:
+To stress-test the scoring logic, we ran `recommend_songs` against several deliberately tricky user profiles — contradictory preferences, missing fields, out-of-range values, and typos. This surfaced two real bugs, which we then fixed in `score_song`. These same 8 profiles are now also formalized as automated regression tests in `tests/test_agent.py`, so they're checked on every run instead of by eyeballing printed output.
 
 1. **`likes_acoustic` was dead code.** The field was parsed into every profile but never read anywhere in the scoring formula. Fixed by adding a +1.0 bonus when `likes_acoustic` is `True` and the song's `acousticness >= 0.5`.
 2. **Out-of-range preference values produced negative scores.** Feature closeness (`1 - |song value - user preference|`) assumed both values were in `[0, 1]`; a preference like `energy=1.8` could push closeness — and therefore points — negative. Fixed by clamping closeness to `max(0.0, ...)`.

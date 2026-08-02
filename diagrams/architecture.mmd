@@ -1,0 +1,40 @@
+flowchart TD
+    subgraph INPUT["Input"]
+        CSV["data/songs.csv"]
+        PREFS["User preference dict<br/>(genre, mood, energy, valence,<br/>danceability, acousticness, likes_acoustic)"]
+    end
+
+    subgraph LOAD["Data Loading - recommender.py"]
+        LOADSONGS["load_songs()"]
+    end
+
+    subgraph AGENT["Agent - agent.py (plan then act then check)"]
+        NORMALIZE["Plan: normalize()<br/>fix casing, clamp out of range values"]
+        DETECT["Plan: detect_issues()<br/>flag empty profile, contradictions,<br/>unsupported keys"]
+        SCORE["Act: recommend_songs() / score_song()<br/>(unchanged scoring engine)"]
+        CRITIQUE["Check: compute_confidence()<br/>label each pick low, medium, or high<br/>self critique the top pick"]
+    end
+
+    subgraph OUTPUT["Output - main.py"]
+        RESULT["Ranked songs + explanation<br/>+ confidence label + agent log"]
+    end
+
+    subgraph CHECKS["Where humans and tests check the AI"]
+        TESTREC["tests/test_recommender.py<br/>checks the scoring engine directly"]
+        TESTAGENT["tests/test_agent.py<br/>checks the 8 adversarial profiles<br/>and confidence boundaries"]
+        HUMAN["You, reading the agent log and<br/>confidence labels before trusting a pick"]
+    end
+
+    CSV --> LOADSONGS
+    LOADSONGS --> SCORE
+    PREFS --> NORMALIZE
+    NORMALIZE --> DETECT
+    DETECT --> SCORE
+    SCORE --> CRITIQUE
+    CRITIQUE --> RESULT
+
+    TESTREC -. verifies .-> SCORE
+    TESTAGENT -. verifies .-> NORMALIZE
+    TESTAGENT -. verifies .-> DETECT
+    TESTAGENT -. verifies .-> CRITIQUE
+    RESULT -. read by .-> HUMAN

@@ -143,6 +143,28 @@ Top recommendations:
   - Danceability closeness 0.92 (+1.84)
   - Acousticness closeness 0.85 (+1.70)
 ==================================================
+3. Rooftop Lights — Score: 9.52 — Confidence: medium
+--------------------------------------------------
+  - Mood matches (happy) +1.0
+  - Energy closeness 0.96 (+2.88)
+  - Valence closeness 0.99 (+1.98)
+  - Danceability closeness 0.98 (+1.96)
+  - Acousticness closeness 0.85 (+1.70)
+==================================================
+4. Fire In The Sky — Score: 8.78 — Confidence: medium
+--------------------------------------------------
+  - Energy closeness 0.98 (+2.94)
+  - Valence closeness 0.92 (+1.84)
+  - Danceability closeness 1.00 (+2.00)
+  - Acousticness closeness 1.00 (+2.00)
+==================================================
+5. Night Drive Loop — Score: 8.05 — Confidence: low
+--------------------------------------------------
+  - Energy closeness 0.95 (+2.85)
+  - Valence closeness 0.69 (+1.38)
+  - Danceability closeness 0.93 (+1.86)
+  - Acousticness closeness 0.98 (+1.96)
+==================================================
 ```
 
 ### Guardrail result: agent catches a mismatched top pick on its own
@@ -171,6 +193,27 @@ Agent log:
   - Danceability closeness 0.92 (+1.84)
   - Acousticness closeness 0.95 (+1.90)
 ==================================================
+3. Neon Pulse Rave — Score: 8.35 — Confidence: low
+--------------------------------------------------
+  - Energy closeness 0.93 (+2.79)
+  - Valence closeness 0.98 (+1.96)
+  - Danceability closeness 0.88 (+1.76)
+  - Acousticness closeness 0.92 (+1.84)
+==================================================
+4. Fire In The Sky — Score: 8.08 — Confidence: low
+--------------------------------------------------
+  - Energy closeness 0.88 (+2.64)
+  - Valence closeness 0.82 (+1.64)
+  - Danceability closeness 1.00 (+2.00)
+  - Acousticness closeness 0.90 (+1.80)
+==================================================
+5. Rooftop Lights — Score: 7.86 — Confidence: low
+--------------------------------------------------
+  - Energy closeness 0.86 (+2.58)
+  - Valence closeness 0.91 (+1.82)
+  - Danceability closeness 0.98 (+1.96)
+  - Acousticness closeness 0.75 (+1.50)
+==================================================
 ```
 
 `Sunrise City` is mood `happy`, not `sad`, and the agent flags it as low confidence on its own instead of presenting it with false certainty.
@@ -192,6 +235,29 @@ Agent log:
   - Mood matches (chill) +1.0
   - Acousticness closeness 0.29 (+0.58)
   - Likes acoustic music and song is acoustic (+1.00)
+==================================================
+2. Library Rain — Score: 4.28 — Confidence: medium
+--------------------------------------------------
+  - Genre matches (lofi) +2.0
+  - Mood matches (chill) +1.0
+  - Acousticness closeness 0.14 (+0.28)
+  - Likes acoustic music and song is acoustic (+1.00)
+==================================================
+3. Focus Flow — Score: 3.44 — Confidence: medium
+--------------------------------------------------
+  - Genre matches (lofi) +2.0
+  - Acousticness closeness 0.22 (+0.44)
+  - Likes acoustic music and song is acoustic (+1.00)
+==================================================
+4. Spacewalk Thoughts — Score: 2.16 — Confidence: low
+--------------------------------------------------
+  - Mood matches (chill) +1.0
+  - Acousticness closeness 0.08 (+0.16)
+  - Likes acoustic music and song is acoustic (+1.00)
+==================================================
+5. Neon Pulse Rave — Score: 1.96 — Confidence: low
+--------------------------------------------------
+  - Acousticness closeness 0.98 (+1.96)
 ==================================================
 ```
 

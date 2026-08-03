@@ -1,21 +1,18 @@
-# 🎵 Music Recommender Simulation
+# 🎵 Harmo-Vibe: Agentic Music Recommender
+
+## Original Project (CodePath AI 110 - Project/Show 3)
+
+This project started as Harmo-Vibe, a rule based music recommender built for my CodePath AI 110 Project 3. The original goal was simple: take a small catalog of songs and a user's stated music taste, then score and rank songs by how closely they matched. Along the way I stress tested the scoring logic against tricky user profiles and found and fixed a couple of real bugs, which taught me a lot about how easily a recommender can quietly behave in ways you did not expect.
 
 ## Project Summary
 
-In this project you will build and explain a small music recommender system.
-
-Your goal is to:
-
-- Represent songs and a user "taste profile" as data
-- Design a scoring rule that turns that data into recommendations
-- Evaluate what your system gets right and wrong
-- Reflect on how this mirrors real world AI recommenders
-
-Replace this paragraph with your own summary of what your version does.
-
-
+Harmo-Vibe recommends songs by comparing a song's audio features, like energy, mood, and danceability, against what a user says they like, then ranking the closest matches. For this final project, I extended it with an agentic loop that sits in front of the original scoring logic. Before it even scores anything, the system now cleans up messy input and notices obvious problems in a user's profile, and after it ranks the songs, it rates how confident it actually is in its own top pick instead of just handing back an answer with false certainty.
 
 ---
+
+## Architecture Overview
+
+The full system diagram lives at [`diagrams/architecture.mmd`](diagrams/architecture.mmd). In short, the song data and a user's preferences flow into the agent, which first cleans up and checks the input, then hands things off to the original scoring engine to rank songs, then looks at its own top pick and rates how confident it is before anything gets printed. Two separate test files sit alongside this, one checking the scoring engine on its own, and one checking the agent's behavior specifically.
 
 ## How The System Works
 
@@ -59,6 +56,12 @@ On top of the scoring engine above, `src/agent.py` wraps every recommendation re
 3. **Check its own work** — for each returned song, compute a confidence label (`low`, `medium`, or `high`) from how much of the profile was actually specified and how close the score is to the next-ranked song. If the #1 pick comes back low confidence, the agent logs a self-critique warning flagging it.
 
 This is what actually catches the mood mismatch bug we found by hand below (Profile 1): the agent flags its own top pick as low confidence instead of presenting it with false certainty. See `tests/test_agent.py` for the automated tests covering this behavior.
+
+### Design Decisions
+
+I chose a deterministic Python design over a live LLM or API call mainly because of project constraints. I wanted the agent's choices to be clear and left or right, meaning either a rule fires or it does not, rather than something ambiguous that also costs API credits just to clean up a user profile. This gave me a much clearer picture of exactly what the system was doing and why, instead of leaving that decision making up to a model I could not fully predict.
+
+I also added a confidence rating because a single score by itself can be misleading. A number alone cannot tell you if it is trustworthy 100 percent of the time. By looking at the margin between songs and how close a song actually is to what the user asked for, the confidence rating gives a better sense of how far apart or how close the underlying data really is, and what that distance actually means for how much you should trust the ranking.
 
 ### Potential Biases to Watch For
 

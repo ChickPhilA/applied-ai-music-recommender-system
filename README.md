@@ -167,6 +167,8 @@ Top recommendations:
 
 To stress-test the scoring logic, we ran `recommend_songs` against several deliberately tricky user profiles — contradictory preferences, missing fields, out-of-range values, and typos. This surfaced two real bugs, which we then fixed in `score_song`. These same 8 profiles are now also formalized as automated regression tests in `tests/test_agent.py`, so they're checked on every run instead of by eyeballing printed output.
 
+**Heads up:** the raw outputs below were captured before the agent existed, straight from `recommend_songs`. Running these same profiles through `src/agent.py` today gives different numbers for Profile 4 and Profile 5 specifically, since the agent now normalizes casing and clamps out of range values before scoring, rather than after. The scoring logic itself hasn't changed, just when the cleanup happens.
+
 1. **`likes_acoustic` was dead code.** The field was parsed into every profile but never read anywhere in the scoring formula. Fixed by adding a +1.0 bonus when `likes_acoustic` is `True` and the song's `acousticness >= 0.5`.
 2. **Out-of-range preference values produced negative scores.** Feature closeness (`1 - |song value - user preference|`) assumed both values were in `[0, 1]`; a preference like `energy=1.8` could push closeness — and therefore points — negative. Fixed by clamping closeness to `max(0.0, ...)`.
 

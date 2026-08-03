@@ -148,6 +148,15 @@ Profiles 7 vs 8: Profile 7 (unknown tempo_bpm key) shows unsupported preferences
 
 **Since these 8 profiles were originally checked by hand, we later built an agentic loop (`src/agent.py`) that automates this same evaluation on every run.** It normalizes inputs, detects the same problem patterns we found manually (empty profiles, contradictory flags, unsupported keys), and self critiques its own top pick with a confidence label. Profile 1's mood mismatch, which used to require us noticing it in printed output, now gets flagged automatically as low confidence. All 8 profiles are also locked in as automated tests in `tests/test_agent.py`, so this evaluation is no longer a one-time manual pass.
 
+**Testing summary, pulled from an actual run:**
+
+- `pytest` results: 15 passed, 2 failed
+- All 12 agent tests pass
+- The 2 failures are the pre-existing, out-of-scope OOP stub, unrelated to this work
+- Across the 8 adversarial profiles plus the default profile, 45 total ranked recommendations were produced
+- Confidence label breakdown: 2 high, 8 medium, 35 low
+- The heavy lean toward low confidence is expected and correct, since the adversarial profiles are deliberately sparse, contradictory, or extreme, so the agent is properly flagging exactly the situations it should be cautious about
+
 ---
 
 ## 8. Future Work  

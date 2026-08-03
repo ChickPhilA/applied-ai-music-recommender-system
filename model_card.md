@@ -3,7 +3,7 @@
 ## 1. Model Name  
 
 Give your model a short, descriptive name.  
-Model name: **Harmo-Vibe**  
+Model name: **Harmo-Vibe: Agentic Music Recommender**  
 
 ---
 
@@ -191,4 +191,24 @@ Prompts:
 **My biggest learning moment about recommender systems is that we can use a mathematical algorithm using an average target value (being the centroid) by just proximity, rather than being a precise-exact value. This helped me understand better how music recommenders on Spotify, YouTube, or other streaming platforms help gather the best recommendations for user's based on their personal preferences or activities.**
 
 **In the future, I could add other features as mentioned prior in the model card to better tailor the user's personal preferences, such as cultural/other languages, to see how other types of music could be measured with our current algorithm. There are over 150 million songs in history; no matter how historically significant or culturally recent it may be, all music can fit one music recommender, for many people.**
+
+---
+
+## 10. Reflection and Ethics (Final Project)
+
+### What are the limitations or biases in your system?
+
+My agent is not actually intelligent. It is just a series of if and else checks, not a trained model, so it can only catch the exact problems I thought to look for. The catalog is still only 20 songs, so it can never really generalize past what is in that one CSV file. The confidence labels come from thresholds I picked myself, like 0.3 for coverage and 0.5 for margin, and those were not tested against real data, just my own judgment. There is also a small bug where the last ranked song in a list gets compared to the wrong neighbor, which makes it look low confidence even when that might not be the real reason. On top of that, the original bias from Project 3 is still there too, genre matching is weighted heavily, so it can crowd out a song that is actually a closer overall match.
+
+### Could your AI be misused, and how would you prevent that?
+
+The biggest risk is someone trusting a high confidence label as some kind of guarantee instead of what it actually is, a rough signal based on score margin and how complete the profile was. Since everything is deterministic and rule based, there is not really a security risk like there would be with a live model that could be tricked or manipulated. To prevent the confidence being misread, I tried to be clear in the README and model card that this is a rule based system with hand picked thresholds, not a trained model, and I made sure the agent logs what it is doing so nothing is hidden.
+
+### What surprised you while testing your AI's reliability?
+
+The thing that actually surprised me was realizing that running the same 8 adversarial profiles through the new agent changed two of the results compared to before. Profile 4 and Profile 5 came out differently, not because the scoring math changed, but because the agent now cleans up the input before scoring instead of after. I also expected the confidence labels to be more balanced, but 35 out of 45 recommendations came back low confidence. At first that looked like a bug, but it actually made sense once I realized those profiles were built on purpose to be messy or contradictory.
+
+### Describe your collaboration with AI during this project
+
+One genuinely helpful moment was when I realized "agentic loop plus testing" was actually two separate items from the requirements, and the AI helped me fold confidence scoring into the agentic loop as its own check step instead of building two separate things. One flawed moment was that small bug with the last ranked song being compared to the wrong neighbor, it slipped through until we actually looked closely at real output together. The first draft of a few commit messages was also way too long and had to be shortened after I pushed back on it.
 

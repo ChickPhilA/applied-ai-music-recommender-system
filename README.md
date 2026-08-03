@@ -109,6 +109,124 @@ Tests live in `tests/test_recommender.py` (core scoring logic) and `tests/test_a
 
 ---
 
+## Execution Evidence
+
+Real output from an actual run, so the system can be checked without watching a video.
+
+### Command and input
+
+```bash
+python -m src.main
+```
+
+Runs the default profile (`genre=pop, mood=happy, energy=0.8, valence=0.8, danceability=0.8, acousticness=0.2`) followed by the 8 adversarial profiles defined in `ADVERSARIAL_PROFILES` inside `src/main.py`.
+
+### Output: default profile, high confidence top pick
+
+```
+Top recommendations:
+==================================================
+1. Sunrise City — Score: 11.80 — Confidence: high
+--------------------------------------------------
+  - Genre matches (pop) +2.0
+  - Mood matches (happy) +1.0
+  - Energy closeness 0.98 (+2.94)
+  - Valence closeness 0.96 (+1.92)
+  - Danceability closeness 0.99 (+1.98)
+  - Acousticness closeness 0.98 (+1.96)
+==================================================
+2. Gym Hero — Score: 10.09 — Confidence: medium
+--------------------------------------------------
+  - Genre matches (pop) +2.0
+  - Energy closeness 0.87 (+2.61)
+  - Valence closeness 0.97 (+1.94)
+  - Danceability closeness 0.92 (+1.84)
+  - Acousticness closeness 0.85 (+1.70)
+==================================================
+```
+
+### Guardrail result: agent catches a mismatched top pick on its own
+
+Input: `{'genre': 'pop', 'mood': 'sad', 'energy': 0.9, 'valence': 0.9, 'danceability': 0.8, 'acousticness': 0.1, 'likes_acoustic': False}`
+
+```
+1. Conflicted (pop/sad, high energy)
+prefs: {'genre': 'pop', 'mood': 'sad', 'energy': 0.9, 'valence': 0.9, 'danceability': 0.8, 'acousticness': 0.1, 'likes_acoustic': False}
+Agent log:
+  [check] Self-critique: top pick 'Sunrise City' has low confidence — treat this ranking with caution.
+==================================================
+1. Sunrise City — Score: 10.46 — Confidence: low
+--------------------------------------------------
+  - Genre matches (pop) +2.0
+  - Energy closeness 0.92 (+2.76)
+  - Valence closeness 0.94 (+1.88)
+  - Danceability closeness 0.99 (+1.98)
+  - Acousticness closeness 0.92 (+1.84)
+==================================================
+2. Gym Hero — Score: 10.39 — Confidence: high
+--------------------------------------------------
+  - Genre matches (pop) +2.0
+  - Energy closeness 0.97 (+2.91)
+  - Valence closeness 0.87 (+1.74)
+  - Danceability closeness 0.92 (+1.84)
+  - Acousticness closeness 0.95 (+1.90)
+==================================================
+```
+
+`Sunrise City` is mood `happy`, not `sad`, and the agent flags it as low confidence on its own instead of presenting it with false certainty.
+
+### Guardrail result: agent detects a contradictory profile
+
+Input: `{'genre': 'lofi', 'mood': 'chill', 'acousticness': 0.0, 'likes_acoustic': True}`
+
+```
+2. likes_acoustic contradiction
+prefs: {'genre': 'lofi', 'mood': 'chill', 'acousticness': 0.0, 'likes_acoustic': True}
+Agent log:
+  [detect] Contradiction: likes_acoustic=True but acousticness target is 0.0 (low). Scoring both signals as given.
+  [check] Self-critique: top pick 'Midnight Coding' has low confidence — treat this ranking with caution.
+==================================================
+1. Midnight Coding — Score: 4.58 — Confidence: low
+--------------------------------------------------
+  - Genre matches (lofi) +2.0
+  - Mood matches (chill) +1.0
+  - Acousticness closeness 0.29 (+0.58)
+  - Likes acoustic music and song is acoustic (+1.00)
+==================================================
+```
+
+### Command and reliability results: full test suite
+
+```bash
+python -m pytest -v
+```
+
+```
+tests/test_agent.py::test_compute_confidence_low_coverage PASSED         [  5%]
+tests/test_agent.py::test_compute_confidence_low_margin PASSED           [ 11%]
+tests/test_agent.py::test_compute_confidence_high PASSED                 [ 17%]
+tests/test_agent.py::test_compute_confidence_medium PASSED               [ 23%]
+tests/test_agent.py::test_profile_1_conflicted_flags_low_confidence_top_pick PASSED [ 29%]
+tests/test_agent.py::test_profile_2_contradiction_is_logged PASSED       [ 35%]
+tests/test_agent.py::test_profile_3_empty_profile_forces_low_confidence_and_is_logged PASSED [ 41%]
+tests/test_agent.py::test_profile_4_case_typo_is_normalized_to_full_match PASSED [ 47%]
+tests/test_agent.py::test_profile_5_out_of_range_values_are_clamped_and_nonnegative PASSED [ 52%]
+tests/test_agent.py::test_profile_6_single_feature_is_low_confidence_sparse_profile PASSED [ 58%]
+tests/test_agent.py::test_profile_7_unknown_key_is_logged_as_unsupported PASSED [ 64%]
+tests/test_agent.py::test_profile_8_perfect_opposite_still_returns_nonnegative_scores PASSED [ 70%]
+tests/test_recommender.py::test_recommend_returns_songs_sorted_by_score FAILED [ 76%]
+tests/test_recommender.py::test_explain_recommendation_returns_non_empty_string FAILED [ 82%]
+tests/test_recommender.py::test_likes_acoustic_gives_bonus_for_acoustic_song PASSED [ 88%]
+tests/test_recommender.py::test_likes_acoustic_gives_no_bonus_for_non_acoustic_song PASSED [ 94%]
+tests/test_recommender.py::test_score_song_clamps_out_of_range_preferences_to_nonnegative PASSED [100%]
+
+========================= 2 failed, 15 passed in 0.06s =========================
+```
+
+The 2 failures are in the pre-existing, out-of-scope `Recommender`/`UserProfile` class stub from the Project 3 starter template (it was never implemented, see `src/recommender.py`), unrelated to the agentic workflow added for this final project. All 12 agent tests and all 3 original scoring tests pass.
+
+---
+
 ## Sample Recommendation Output
 
 Output from `python -m src.main` for the default "pop/happy" profile (`genre=pop, mood=happy, energy=0.8, valence=0.8, danceability=0.8, acousticness=0.2`):

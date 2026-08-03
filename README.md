@@ -612,5 +612,11 @@ Write 1 to 2 paragraphs here about what you learned:
 - about how recommenders turn data into predictions
 - about where bias or unfairness could show up in systems like this
 
+---
 
+## Portfolio Reflection
+
+What this project says about me as an AI engineer:
+
+This project showed me that I can take something I already built and actually level it up with real engineering thinking, not just more features bolted on. Adding the plan, act, check loop pushed me to think in terms of patterns instead of one off fixes. Working with an AI collaborator throughout also showed me that I can use that kind of help without losing control of the project, I stayed the one making the calls on scope and tone, and pushed back when something did not fit what I actually wanted. And beyond just writing code that works, I made sure to document why I made the choices I did, so someone reading this repo understands my reasoning, not just my output.
 
